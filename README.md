@@ -1,8 +1,23 @@
 # Scalability Analysis of Microservice Architecture
 
-This project focuses on conducting a detailed analysis of a microservice architecture system to assess its scalability on a specific software application.
+## Project Directory Structure
+
+This repository contains various resources used for our project. Here's a quick rundown of the primary directories and their contents:
+
+- **`papers`**: This directory holds all the academic papers that have been reviewed and analyzed for the project.
+
+- **`data`**: This directory contains all the data sets used for the experiments and analysis.
+
+- **`presentations`**: Any presentations related to the project, including both planning and results, are stored here.
+
+- **`reports`**: This directory is for all the detailed reports generated throughout the project. Each report is named according to the date it was created, following the format `report_DATE.pdf`.
+
+Please explore the directories for more detailed information.
+
 
 ## Project Overview
+
+This project focuses on conducting a detailed analysis of a microservice architecture system to assess its scalability on a specific software application.
 
 1. **Objective**: Examine the scalability of a microservice architecture in terms of its ability to handle increased load and expand to accommodate growth.
 

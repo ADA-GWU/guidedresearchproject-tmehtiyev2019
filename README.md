@@ -4,9 +4,9 @@
 
 This repository contains various resources used for our project. Here's a quick rundown of the primary directories and their contents:
 
-- **`papers`**: This directory holds all the academic papers that have been reviewed and analyzed for the project.
-
 - **`data`**: This directory contains all the data sets used for the experiments and analysis.
+
+- **`papers`**: This directory holds all the academic papers that have been reviewed and analyzed for the project.
 
 - **`presentations`**: Any presentations related to the project, including both planning and results, are stored here.
 

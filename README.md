@@ -12,6 +12,8 @@ This repository contains various resources used for our project. Here's a quick 
 
 - **`reports`**: This directory is for all the detailed reports generated throughout the project. Each report is named according to the date it was created, following the format `report_DATE.pdf`.
 
+- **`reviews`**: This directory contains the reviews of research proposals submitted by peers. Each review is named according to the date it was created and the submitter's name, following the format `Review_Date_Submitter_Name.pdf`.
+
 Please explore the directories for more detailed information.
 
 

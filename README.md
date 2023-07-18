@@ -26,10 +26,7 @@ This project focuses on conducting a detailed analysis of a microservice archite
 2. **Scalability Attributes**: 
 
     - Performance
-    - Load Scalability
-    - Resource Utilization
-    - Capacity
-    - Fault Tolerance and Resilience
+
 
 3. **Metrics for Scalability Analysis**:
 
@@ -37,12 +34,7 @@ This project focuses on conducting a detailed analysis of a microservice archite
     - Throughput
     - Resource Usage
     - Error Rates
-    - Latency
-    - System Utilization
-    - Service Time
-    - Scalability Ratio
-    - Queue Length
-    - Availability
+
 
 4. **Approach**: Develop a comprehensive methodology combining empirical testing with theoretical analysis.
 

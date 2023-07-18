@@ -4,76 +4,67 @@ This microservice manages the processing of customer orders.
 
 ## API Documentation
 
-API Documentation
-GET /orders: 
+#### GET /orders: 
 Get all orders.
 
-GET /orders/{order_id}: 
-Get order by ID.
 
-POST /orders: 
-Create a new order.
+##### Response
 
-PUT /orders/{order_id}: 
-Update order status by ID.
+`200 OK`: Successful operation. Returns a list of orders.
 
-GET /orders:
-Returns a list of all orders.
 
-### Response
-
-200 OK: Successful operation. Returns a list of orders.
-
-GET /orders/{order_id}:
+#### GET /orders/{order_id}: 
 Returns the order with the specified ID.
 
-### Parameters
 
-order_id: ID of the order to retrieve.
+##### Parameters
 
-### Response
+`order_id`: ID of the order to retrieve.
 
-200 OK: Successful operation. Returns the order with the specified ID.
+##### Response
 
-404 Not Found: Order with the specified ID not found.
+`200 OK`: Successful operation. Returns the order with the specified ID.
 
-POST /orders:
+`404 Not Found`: Order with the specified ID not found.
+
+#### POST /orders:
 Creates a new order.
 
-### Request Body
 
-id (integer): ID of the order.
+##### Request Body
 
-customer_name (string): Name of the customer.
+`id (integer)`: ID of the order.
 
-items (array of objects): Array of order items.
+`customer_name (string)`: Name of the customer.
 
-product_id (integer): ID of the product.
+`items (array of objects)`: Array of order items.
 
-quantity (integer): Quantity of the product.
+`product_id (integer)`: ID of the product.
 
-### Response
+`quantity (integer)`: Quantity of the product.
 
-201 Created: Order created successfully.
+##### Response
 
-500 Internal Server Error: Failed to create the order.
+`201 Created`: Order created successfully.
 
-PUT /orders/{order_id}:
+`500 Internal Server Error`: Failed to create the order.
+
+#### PUT /orders/{order_id}:
 Updates the status of the order with the specified ID.
 
-### Parameters
+##### Parameters
 
-order_id: ID of the order to update.
+`order_id`: ID of the order to update.
 
-### Request Body
+##### Request Body
 
-status (string): New status of the order.
+`status (string)`: New status of the order.
 
-### Response
+##### Response
 
-200 OK: Successful operation. Order status updated successfully.
+`200 OK`: Successful operation. Order status updated successfully.
 
-404 Not Found: Order with the specified ID not found.
+`404 Not Found`: Order with the specified ID not found.
 
 
 ## Access the microservice at

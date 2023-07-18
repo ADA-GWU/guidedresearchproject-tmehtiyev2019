@@ -16,6 +16,8 @@ Add a new product.
 PUT /products/{product_id}
 Update product by ID.
 
+Refer to the API documentation for detailed information on request/response payloads and usage.
+
 
 ## Access the microservice at
 http://localhost:8001

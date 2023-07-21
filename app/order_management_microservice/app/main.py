@@ -1,68 +1,77 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+import psycopg2
+from psycopg2.extras import RealDictCursor
 import requests
+import time
+
+while True:
+    try:
+        conn = psycopg2.connect(host='localhost', database='OrderManagement', 
+                                user='postgres', password="xxxx", cursor_factory=RealDictCursor)
+        cur = conn.cursor()
+        print("Database connection was successful")
+        break
+    except Exception as error:
+        print("Connecting to database failed")
+        print("Error: ", error)
+        time.sleep(3)
+        break  # temporary
 
 app = FastAPI()
 
-# Mock database
-orders = []
 
-
-class CartItem(BaseModel):
+class OrderItem(BaseModel):
     product_id: int
     quantity: int
 
 
 class Order(BaseModel):
     id: int
-    customer_name: str
-    items: list[CartItem]
+    customer_id: int
+    items: list[OrderItem]
     status: str
 
 
-@app.get("/orders")
-def get_orders():
-    return orders
-
-
-@app.get("/orders/{order_id}")
-def get_order(order_id: int):
-    for order in orders:
-        if order.id == order_id:
-            return order
-    return {"message": "Order not found"}, 404
-
-
-@app.post("/orders")
-def create_order(order: Order):
+@app.post("/orders/{customer_id}")
+def create_order(customer_id: int):
     # Retrieve the customer's shopping cart from the Shopping Cart Microservice
-    response = requests.get("http://localhost:8002/carts")
+    response = requests.get(f"http://localhost:8002/carts/{customer_id}")
     if response.status_code == 200:
         cart = response.json()
 
-        # Save the order and update inventory in the Product Catalog Microservice
-        order.items = cart
-        orders.append(order)
+        # Confirm that sufficient inventory is available for each item in the cart
+        for item in cart['items']:
+            product = requests.get(f"http://localhost:8001/products/{item['product_id']}").json()
+            if product['quantity'] < item['quantity']:
+                return {"message": f"Not enough product in stock for product id {item['product_id']}"}, 400
 
-        # Make a request to the Product Catalog Microservice to update inventory
-        product_ids = [item.product_id for item in cart]
-        product_payload = {"product_ids": product_ids}
-        response = requests.put("http://localhost:8001/products/update_inventory", json=product_payload)
+        # If we reach here, it means we have enough inventory for all items in the cart.
+        # Now, decrease the product quantity in the Product Catalog Service and create the order
+        for item in cart['items']:
+            product = requests.get(f"http://localhost:8001/products/{item['product_id']}").json()
+            product['quantity'] -= item['quantity']
+            requests.put(f"http://localhost:8001/products/{item['product_id']}", json=product)
 
-        if response.status_code == 200:
-            # Inventory updated successfully
-            return {"message": "Order created successfully"}, 201
-        else:
-            # Failed to update inventory
-            return {"message": "Failed to update inventory"}, 500
+            cur.execute("INSERT INTO orders (customer_id, product_id, quantity, status) VALUES (%s, %s, %s, 'Ordered')",
+                        (customer_id, item['product_id'], item['quantity']))
+            conn.commit()
+
+        # Updating the order status in the Shopping Cart Microservice
+        response = requests.put(f"http://localhost:8002/carts/{customer_id}", json={"status": "Ordered"})
+        if response.status_code != 200:
+            return {"message": "Failed to update cart status"}, 500
+
+        return {"message": "Order created successfully"}, 201
 
     return {"message": "Failed to retrieve the customer's shopping cart"}, 500
 
 
-@app.put("/orders/{order_id}")
-def update_order_status(order_id: int, status: str):
-    for order in orders:
-        if order.id == order_id:
-            order.status = status
-            return {"message": f"Order with ID: {order_id} status updated successfully"}
-    return {"message": "Order not found"}, 404
+@app.get("/orders/{customer_id}")
+def get_orders(customer_id: int):
+    cur.execute("SELECT * FROM orders WHERE customer_id = %s", (customer_id,))
+    orders = cur.fetchall()
+    if not orders:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                            detail=f"Orders for customer with id: {customer_id} were not found")
+    return {"orders": orders}

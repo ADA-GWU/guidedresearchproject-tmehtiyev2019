@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import FastAPI,Response, HTTPException
+from fastapi import FastAPI,Response, HTTPException, Depends
 from fastapi import status
 from fastapi.params import Body
 from random import randrange
@@ -7,26 +7,12 @@ from pydantic import BaseModel
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
+import models
+from database import engine, SessionLocal, get_db
+from sqlalchemy.orm import Session
 
+models.Base.metadata.create_all(bind=engine)
 
-while True:
-    try:
-        # Connect to your postgres DB
-        conn = psycopg2.connect(host='localhost', database='ProductCatalog', 
-                                user='postgres', password="xxxx", cursor_factory=RealDictCursor)
-
-        # Open a cursor to perform database operations
-        cur = conn.cursor()
-
-        print("Database connection was sucessfull")
-        break
-
-
-    except Exception as error:
-        print("Connecting to database failed")
-        print("Error: ", error)
-        time.sleep(3)
-        break #temporary
 
 app = FastAPI()
 
@@ -39,6 +25,11 @@ class Product(BaseModel):
 @app.get("/")
 def root():
     return {"message":"Welcome to product catalog service"}
+
+
+@app.get("/sqlalchemy")
+def test( db: Session = Depends(get_db)):
+    return {"status":"success"}
 
 @app.get("/products")
 def get_products():

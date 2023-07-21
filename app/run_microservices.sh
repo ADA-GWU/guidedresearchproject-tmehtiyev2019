@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Run the Product Catalog Microservice
-cd product_service
-uvicorn product_service:app --host 0.0.0.0 --port 8001 &
+cd app/product_catalog_microservice/app
+uvicorn product_service:app http://localhost:8001
 
 # Run the Shopping Cart Microservice
 cd ../cart_service

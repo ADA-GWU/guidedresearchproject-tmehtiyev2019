@@ -12,8 +12,8 @@ import time
 while True:
     try:
         # Connect to your postgres DB
-        conn = psycopg2.connect(host='localhost', database='ProductCatalog', 
-                                user='postgres', password="xxxx", cursor_factory=RealDictCursor)
+        conn = psycopg2.connect(host='microservice-db.cyxnkg8bocgc.us-east-2.rds.amazonaws.com', port="5432", database='microservice-db', 
+                                user='postgres', password="qwer1234!", cursor_factory=RealDictCursor)
 
         # Open a cursor to perform database operations
         cur = conn.cursor()
@@ -38,7 +38,7 @@ class Product(BaseModel):
 
 @app.get("/")
 def root():
-    return {"message":"Welcome to product catalog service"}
+    return {"message":"Welcome to product catalog service. This is Test"}
 
 @app.get("/products")
 def get_products():

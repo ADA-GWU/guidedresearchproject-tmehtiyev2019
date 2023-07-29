@@ -9,24 +9,64 @@ from psycopg2.extras import RealDictCursor
 import time
 
 
-while True:
-    try:
-        # Connect to your postgres DB
-        conn = psycopg2.connect(host='database-1.cyxnkg8bocgc.us-east-2.rds.amazonaws.com', port="5432", database='microservicedb', 
-                                user='postgres', password="qwer1234!", cursor_factory=RealDictCursor)
+# while True:
 
-        # Open a cursor to perform database operations
-        cur = conn.cursor()
+try:
+    conn = psycopg2.connect(
+        dbname='microservicedb',
+        user='postgres',
+        password="qwer1234!",
+        host='database-1.cyxnkg8bocgc.us-east-2.rds.amazonaws.com',
+        port="5432",
+        cursor_factory=RealDictCursor
+    )
+except psycopg2.Error as e:
+    print("Unable to connect to the database")
 
-        print("Database connection was sucessfull")
-        break
+try:
+    cur = conn.cursor()
+
+    create_table_query = '''
+    CREATE TABLE products_test(
+        id SERIAL PRIMARY KEY,
+        name VARCHAR NOT NULL,
+        price INTEGER NOT NULL,
+        quantity INTEGER NOT NULL
+    )
+    '''
+
+    cur.execute(create_table_query)
+    conn.commit()
+    print("Table created successfully")
+
+except psycopg2.Error as e:
+    print("An error occurred while creating the table:", e)
+
+finally:
+    if cur is not None:
+        cur.close()
+    if conn is not None:
+        conn.close()
 
 
-    except Exception as error:
-        print("Connecting to database failed")
-        print("Error: ", error)
-        time.sleep(3)
-        break #temporary
+
+
+    #     # Connect to your postgres DB
+    #     conn = psycopg2.connect(host='database-1.cyxnkg8bocgc.us-east-2.rds.amazonaws.com', port="5432", database='microservicedb', 
+    #                             user='postgres', password="qwer1234!", cursor_factory=RealDictCursor)
+
+    #     # Open a cursor to perform database operations
+    #     cur = conn.cursor()
+
+    #     print("Database connection was sucessfull")
+    #     break
+
+
+    # except Exception as error:
+    #     print("Connecting to database failed")
+    #     print("Error: ", error)
+    #     time.sleep(3)
+    #     break #temporary
 
 app = FastAPI()
 

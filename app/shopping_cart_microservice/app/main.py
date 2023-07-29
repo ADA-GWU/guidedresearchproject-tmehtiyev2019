@@ -7,32 +7,67 @@ import time
 import requests
 
 
-while True:
-    try:
-        conn = psycopg2.connect(host='localhost', database='ShoppingCart', 
-                                user='postgres', password="xxxx", cursor_factory=RealDictCursor)
-        cur = conn.cursor()
-        print("Database connection was successful")
-        break
-    except Exception as error:
-        print("Connecting to database failed")
-        print("Error: ", error)
-        time.sleep(3)
-        break  # temporary
 
-app = FastAPI()
+try:
+    conn = psycopg2.connect(
+        dbname='shopping_cart_db',
+        user='postgres',
+        password="qwer1234!",
+        host='database-1.cyxnkg8bocgc.us-east-2.rds.amazonaws.com',
+        port="5432",
+        cursor_factory=RealDictCursor
+    )
+except psycopg2.Error as e:
+    print("Unable to connect to the database")
+
+try:
+    cur = conn.cursor()
+
+    # Create a 'cart' table
+    create_cart_table_query = '''
+    CREATE TABLE IF NOT EXISTS cart(
+        id SERIAL PRIMARY KEY,
+        customer_id INT NOT NULL,
+        status VARCHAR NOT NULL
+    )
+    '''
+
+    # Create a 'cart_item' table
+    create_cart_item_table_query = '''
+    CREATE TABLE IF NOT EXISTS cart_item(
+        id SERIAL PRIMARY KEY,
+        product_id INT NOT NULL,
+        quantity INT NOT NULL,
+        cart_id INT,
+        FOREIGN KEY (cart_id) REFERENCES cart (id)
+    )
+    '''
+
+    cur.execute(create_cart_table_query)
+    cur.execute(create_cart_item_table_query)
+
+    conn.commit()
+    print("Tables created successfully")
+
+except psycopg2.Error as e:
+    print("An error occurred while creating the tables:", e)
 
 
 class CartItem(BaseModel):
+    id: int
     product_id: int
     quantity: int
+    cart_id: int
 
 
 class Cart(BaseModel):
     id: int
     customer_id: int
-    items: list[CartItem]
     status: str
+    items: list[CartItem]
+
+
+app = FastAPI()
 
 
 @app.get("/carts/{customer_id}")

@@ -27,7 +27,7 @@ try:
     cur = conn.cursor()
 
     create_table_query = '''
-    CREATE TABLE products_test(
+    CREATE TABLE IF NOT EXISTS products(
         id SERIAL PRIMARY KEY,
         name VARCHAR NOT NULL,
         price INTEGER NOT NULL,
@@ -42,31 +42,11 @@ try:
 except psycopg2.Error as e:
     print("An error occurred while creating the table:", e)
 
-finally:
-    if cur is not None:
-        cur.close()
-    if conn is not None:
-        conn.close()
-
-
-
-
-    #     # Connect to your postgres DB
-    #     conn = psycopg2.connect(host='database-1.cyxnkg8bocgc.us-east-2.rds.amazonaws.com', port="5432", database='microservicedb', 
-    #                             user='postgres', password="qwer1234!", cursor_factory=RealDictCursor)
-
-    #     # Open a cursor to perform database operations
-    #     cur = conn.cursor()
-
-    #     print("Database connection was sucessfull")
-    #     break
-
-
-    # except Exception as error:
-    #     print("Connecting to database failed")
-    #     print("Error: ", error)
-    #     time.sleep(3)
-    #     break #temporary
+# finally:
+#     if cur is not None:
+#         cur.close()
+#     if conn is not None:
+#         conn.close()
 
 app = FastAPI()
 
@@ -78,7 +58,7 @@ class Product(BaseModel):
 
 @app.get("/")
 def root():
-    return {"message":"Welcome to product catalog service. This is Test"}
+    return {"message":"Welcome to product catalog service."}
 
 @app.get("/products")
 def get_products():

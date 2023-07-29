@@ -78,7 +78,7 @@ def get_cart(customer_id: int):
 
 @app.post("/carts/{customer_id}", status_code=status.HTTP_201_CREATED)
 def add_item_to_cart(customer_id: int, cart_item: CartItem):
-    response = requests.get(f"http://localhost:8000/products/{cart_item.product_id}")
+    response = requests.get(f"https://firstdeployment-1-o4058039.deta.app/products/{cart_item.product_id}")
     if response.status_code == 200:
         product = response.json()["product_detail"]
         if product['quantity'] >= cart_item.quantity:
@@ -115,7 +115,7 @@ def delete_item_from_cart(customer_id: int, product_id: int):
 
 @app.put("/carts/{customer_id}/{product_id}")
 def update_item_in_cart(customer_id: int, product_id: int, updated_cart_item: CartItem):
-    response = requests.get(f"http://localhost:8000/products/{product_id}")
+    response = requests.get(f"https://firstdeployment-1-o4058039.deta.app/products/{product_id}")
     if response.status_code == 200:
         product = response.json()["product_detail"]
         if product['quantity'] >= updated_cart_item.quantity:

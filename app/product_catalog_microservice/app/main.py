@@ -9,11 +9,9 @@ from psycopg2.extras import RealDictCursor
 import time
 
 
-# while True:
-
 try:
     conn = psycopg2.connect(
-        dbname='microservicedb',
+        dbname='product_catalog_db',
         user='postgres',
         password="qwer1234!",
         host='database-1.cyxnkg8bocgc.us-east-2.rds.amazonaws.com',

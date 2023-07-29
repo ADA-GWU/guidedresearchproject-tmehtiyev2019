@@ -65,6 +65,27 @@ class Cart(BaseModel):
 
 app = FastAPI()
 
+@app.get("/")
+def root():
+    return {"message":"Welcome to shopping cart service."}
+
+@app.get("/carts")
+def get_all_carts():
+    cur.execute("SELECT * FROM carts")
+    all_carts = cur.fetchall()
+    if not all_carts:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                            detail="No carts found")
+    return {"carts": all_carts}
+
+@app.get("/cart_items")
+def get_all_cart_items():
+    cur.execute("SELECT * FROM cart_items")
+    items = cur.fetchall()
+    if items is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                            detail="No items found in any cart")
+    return {"items": items}
 
 @app.get("/carts/{customer_id}")
 def get_cart(customer_id: int):

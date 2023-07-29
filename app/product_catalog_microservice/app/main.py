@@ -12,7 +12,7 @@ import time
 while True:
     try:
         # Connect to your postgres DB
-        conn = psycopg2.connect(host='microservice-db.cyxnkg8bocgc.us-east-2.rds.amazonaws.com', port="5432", database='microservice-db', 
+        conn = psycopg2.connect(host='database-1.cyxnkg8bocgc.us-east-2.rds.amazonaws.com', port="5432", database='microservicedb', 
                                 user='postgres', password="qwer1234!", cursor_factory=RealDictCursor)
 
         # Open a cursor to perform database operations

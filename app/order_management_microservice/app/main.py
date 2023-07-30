@@ -69,6 +69,10 @@ class Order(BaseModel):
 
 app = FastAPI()
 
+@app.get("/")
+def root():
+    return {"message":"Welcome to order management service."}
+
 @app.post("/orders/{customer_id}")
 def create_order(customer_id: int):
     # Retrieve the customer's shopping cart from the Shopping Cart Microservice
@@ -102,6 +106,15 @@ def create_order(customer_id: int):
 
     return {"message": "Failed to retrieve the customer's shopping cart"}, 500
 
+
+@app.get("/orders")
+def get_all_orders():
+    cur.execute("SELECT * FROM orders")
+    orders = cur.fetchall()
+    if not orders:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                            detail=f"No orders were found")
+    return {"orders": orders}
 
 @app.get("/orders/{customer_id}")
 def get_orders(customer_id: int):

@@ -5,10 +5,6 @@ from psycopg2.extras import RealDictCursor
 import requests
 import time
 
-from pydantic import BaseModel
-from psycopg2.extras import RealDictCursor
-import psycopg2
-
 # Connect to the database
 try:
     conn = psycopg2.connect(
@@ -88,14 +84,17 @@ def create_order(customer_id: int):
 
         # If we reach here, it means we have enough inventory for all items in the cart.
         # Now, decrease the product quantity in the Product Catalog Service and create the order
+        cur.execute("INSERT INTO orders (customer_id, status) VALUES (%s, 'Ordered') RETURNING id",
+                    (customer_id,))
+        order_id = cur.fetchone()['id']
         for item in cart['items']:
             product = requests.get(f"https://firstdeployment-1-o4058039.deta.app/products/{item['product_id']}").json()
             product['quantity'] -= item['quantity']
             requests.put(f"https://firstdeployment-1-o4058039.deta.app/products/{item['product_id']}", json=product)
 
-            cur.execute("INSERT INTO orders (customer_id, product_id, quantity, status) VALUES (%s, %s, %s, 'Ordered')",
-                        (customer_id, item['product_id'], item['quantity']))
-            conn.commit()
+            cur.execute("INSERT INTO order_items (product_id, quantity, order_id) VALUES (%s, %s, %s)",
+                        (item['product_id'], item['quantity'], order_id))
+        conn.commit()
 
         # Updating the order status in the Shopping Cart Microservice
         response = requests.put(f"https://shopping_cart-1-y6546994.deta.app/carts/{customer_id}", json={"status": "Ordered"})
@@ -109,12 +108,17 @@ def create_order(customer_id: int):
 
 @app.get("/orders")
 def get_all_orders():
-    cur.execute("SELECT * FROM orders")
-    orders = cur.fetchall()
-    if not orders:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
-                            detail=f"No orders were found")
-    return {"orders": orders}
+    try:
+        cur.execute("SELECT * FROM orders")
+        orders = cur.fetchall()
+        if not orders:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                                detail=f"No orders were found")
+        return {"orders": orders}
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
 
 @app.get("/orders/{customer_id}")
 def get_orders(customer_id: int):

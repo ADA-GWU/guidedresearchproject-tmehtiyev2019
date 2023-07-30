@@ -40,11 +40,11 @@ try:
 except psycopg2.Error as e:
     print("An error occurred while creating the table:", e)
 
-# finally:
-#     if cur is not None:
-#         cur.close()
-#     if conn is not None:
-#         conn.close()
+finally:
+    if cur is not None:
+        cur.close()
+    if conn is not None:
+        conn.close()
 
 app = FastAPI()
 

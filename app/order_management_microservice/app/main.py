@@ -50,6 +50,11 @@ try:
 except psycopg2.Error as e:
     print("An error occurred while creating the tables:", e)
 
+finally:
+    if cur is not None:
+        cur.close()
+    if conn is not None:
+        conn.close()
 
 class OrderItem(BaseModel):
     product_id: int
@@ -108,16 +113,12 @@ def create_order(customer_id: int):
 
 @app.get("/orders")
 def get_all_orders():
-    try:
-        cur.execute("SELECT * FROM orders")
-        orders = cur.fetchall()
-        if not orders:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
-                                detail=f"No orders were found")
-        return {"orders": orders}
-    except Exception as e:
-        print(e)
-        raise HTTPException(status_code=500, detail="Internal Server Error")
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM orders")
+    orders = cur.fetchall()
+    if not orders:
+        return {"message": "No orders were found.", "orders": []}
+    return {"orders": orders}
 
 
 @app.get("/orders/{customer_id}")

@@ -5,20 +5,54 @@ from psycopg2.extras import RealDictCursor
 import requests
 import time
 
-while True:
-    try:
-        conn = psycopg2.connect(host='localhost', database='OrderManagement', 
-                                user='postgres', password="xxxx", cursor_factory=RealDictCursor)
-        cur = conn.cursor()
-        print("Database connection was successful")
-        break
-    except Exception as error:
-        print("Connecting to database failed")
-        print("Error: ", error)
-        time.sleep(3)
-        break  # temporary
+from pydantic import BaseModel
+from psycopg2.extras import RealDictCursor
+import psycopg2
 
-app = FastAPI()
+# Connect to the database
+try:
+    conn = psycopg2.connect(
+        dbname='order_management_db',
+        user='postgres',
+        password="qwer1234!",
+        host='database-1.cyxnkg8bocgc.us-east-2.rds.amazonaws.com',
+        port="5432",
+        cursor_factory=RealDictCursor
+    )
+except psycopg2.Error as e:
+    print("Unable to connect to the database")
+
+try:
+    cur = conn.cursor()
+
+    # Create 'orders' table
+    create_orders_table_query = '''
+    CREATE TABLE IF NOT EXISTS orders(
+        id SERIAL PRIMARY KEY,
+        customer_id INT NOT NULL,
+        status VARCHAR NOT NULL
+    )
+    '''
+
+    # Create 'order_items' table
+    create_order_items_table_query = '''
+    CREATE TABLE IF NOT EXISTS order_items(
+        id SERIAL PRIMARY KEY,
+        product_id INT NOT NULL,
+        quantity INT NOT NULL,
+        order_id INT,
+        FOREIGN KEY (order_id) REFERENCES orders (id)
+    )
+    '''
+
+    cur.execute(create_orders_table_query)
+    cur.execute(create_order_items_table_query)
+
+    conn.commit()
+    print("Tables created successfully")
+
+except psycopg2.Error as e:
+    print("An error occurred while creating the tables:", e)
 
 
 class OrderItem(BaseModel):
@@ -32,6 +66,8 @@ class Order(BaseModel):
     items: list[OrderItem]
     status: str
 
+
+app = FastAPI()
 
 @app.post("/orders/{customer_id}")
 def create_order(customer_id: int):

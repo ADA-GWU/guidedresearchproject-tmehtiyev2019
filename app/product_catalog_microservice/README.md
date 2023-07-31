@@ -3,7 +3,7 @@
 This microservice is responsible for managing the product inventory, details, and availability.
 
 
-## API Documentation
+## API Endpoints
 #### GET /products:
 
 Get all products.

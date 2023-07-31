@@ -2,7 +2,7 @@
 
 This microservice manages the processing of customer orders.
 
-## API Documentation
+## API Endpoints
 
 #### GET /orders: 
 Get all orders.

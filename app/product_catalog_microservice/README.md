@@ -27,7 +27,7 @@ Returns the product with the specified ID.
 Creates a new product in the catalog.
 
 #### Request Body
-name (string): Name of the product.
+`name (string)`: Name of the product.
 
 `price (integer)`: Price of the product.
 
@@ -43,7 +43,7 @@ name (string): Name of the product.
 Updates the specified product in the catalog.
 
 #### Parameters
-product_id: ID of the product to update.
+`product_id`: ID of the product to update.
 
 #### Request Body
 `name (string)`: New name of the product.
@@ -91,14 +91,103 @@ There is one table created within this service:
 `quantity`: The quantity of the product in the inventory.
 
 ## Service Deployment
-This service is designed to be deployed to Deta Space, a cloud-based, scalable environment for running FastAPI applications. The deployment process is similar to the Order Management Service.
+
+This service is designed to be deployed to `Deta Space`, a cloud-based, scalable environment for running FastAPI applications. Here are step-by-step instructions on how to do this:
+
+### Create a FastAPI App
+
+* Create a new directory for your app:
+
+
+```
+
+mkdir fastapi-deta
+cd fastapi-deta
+
+```
+
+* Create a `main.py` file with your FastAPI code.
+
+* Create a `requirements.txt` file with the following content:
+
+
+```
+fastapi
+uvicorn[standard]
+```
+
+
+
+### Set up Deta Space
+
+* Create a free Deta Space account. Developer Mode should be enabled when you sign up.
+
+* Install the Deta Space CLI:
+
+
+```
+curl -fsSL https://get.deta.dev/space-cli.sh | sh
+```
+
+Restart your terminal after installing.
+
+* Install the Deta Space CLI: Generate an access token from your Deta Space Canvas settings and use it to login:
+
+
+```
+space login
+```
+
+* Create a new project in Space:
+
+
+  ```
+  space new
+  ```
+
+You will be prompted for your project's name, let's say `fastapi-deta`. The CLI will automatically detect the framework or language you are using and create a new Space Project.
+
+* Define the run command in the Spacefile: Add the command `uvicorn main:app` under the `run` key in your Spacefile.
+
+* Deploy to Deta Space:
+
+  
+```
+space push
+```
+
+This command will package your code, upload all the necessary files to Deta Space, and run a remote build of your app.
+
+* Enable public access: If you want to make your API public, add the `public_routes` parameter to your Spacefile: 
+
+
+```
+v: 0
+micros:
+  - name: fastapi-deta
+    src: .
+    engine: python3.9
+    public_routes:
+      - "/*"
+```
+
+Run `space push` again to update your live API on Deta Space.
+
+* Create a release:If you want to publish your API, run `space release` in the Space CLI to create an unlisted release. If you want your app to be publicly discoverable, create a listed release with `space release --listed`.
+  
+* Check runtime logs: You can add logging functionality to your app by adding print statements to your code. You can then view your app's logs in your Deta Space's Canvas.
+
+Note that Deta Space takes care of HTTPS, running on startup, restarts, replication, authentication, and memory limits for you. More complex deployment processes can be configured using the Spacefile. You can read more in the Deta Space Documentation.
+
 
 ## Access the microservice at
 https://product_catalog-1-w1405204.deta.app/
 
 Refer to the API documentation for detailed information on request/response payloads and usage.
 
-## Access the API documentation at
+## Access the API documentation at Swagger UI
 https://product_catalog-1-w1405204.deta.app/docs
 
 
+## Access the Postman API Test Collection:
+app/Postman API Test Collection

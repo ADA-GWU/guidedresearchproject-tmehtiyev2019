@@ -199,8 +199,7 @@ def create_order(customer_id: int):
 This service uses `PostgreSQL` as its database which is deployed on `Amazon RDS`. It connects to the PostgreSQL instance using the psycopg2 library. The database connection parameters are specified within the application code, including the database name, user, password, host, and port.
 
 Upon application start-up, the service automatically connects to the database using the provided credentials and host information. The code then checks for the existence of necessary tables (orders and order_items) and creates them if they do not exist.
-<<<<<<< HEAD
-=======
+
 
 
 ```
@@ -218,8 +217,6 @@ except psycopg2.Error as e:
     print("Unable to connect to the database")
 ```
 
-
->>>>>>> 5443d82c024ec5037875e03d28379ea679bea933
 
 ### Database Tables
 There are two tables created within this service:

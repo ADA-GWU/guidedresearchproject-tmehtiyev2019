@@ -287,6 +287,19 @@ Run `space push` again to update your live API on Deta Space.
 
 Note that Deta Space takes care of HTTPS, running on startup, restarts, replication, authentication, and memory limits for you. More complex deployment processes can be configured using the Spacefile. You can read more in the Deta Space Documentation.
 
+## Software Dependencies
+The Shopping Cart Microservice is dependent on several software libraries for its operation:
+
+#### FastAPI: 
+This is the web framework used to build the API of the Shopping Cart Microservice. FastAPI is modern, fast (high-performance), web framework for building APIs with Python 3.6+ based on standard Python type hints.
+
+#### psycopg2: 
+This is a PostgreSQL database adapter for Python. The Shopping Cart Microservice uses this library to connect to its PostgreSQL database that is hosted on Amazon RDS.
+
+#### Requests: 
+This is a Python library used for making HTTP requests. It abstracts the complexities of making requests behind a simple API, allowing you to send HTTP/1.1 requests. The Shopping Cart Microservice uses this library to communicate with the Product Catalog Microservice.
+
+These dependencies are listed in a `requirements.txt` file and installed in the environment where the service runs using pip, the Python package installer.
 
 ## Access the microservice at
 https://product_catalog-1-f3543029.deta.app/

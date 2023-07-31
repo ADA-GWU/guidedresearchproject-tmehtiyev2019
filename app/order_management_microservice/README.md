@@ -98,15 +98,20 @@ There are two tables created within this service:
 #### orders: This table keeps track of all customer orders. It has three fields:
 
 `id` : A unique identifier for the order.
+
 `customer_id`: The identifier for the customer who placed the order.
+
 `status`: The status of the order (e.g., 'Ordered').
 
 
 #### order_items: This table stores details of all items in each order. It has four fields:
 
 `id`: A unique identifier for the order item.
+
 `product_id`: The identifier for the product ordered.
+
 `quantity`: The number of units of the product ordered.
+
 `order_id`: The identifier of the order in which the item was ordered. This is a foreign key referencing the id field in the orders table.
 
 

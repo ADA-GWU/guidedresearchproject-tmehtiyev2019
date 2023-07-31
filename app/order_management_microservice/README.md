@@ -82,10 +82,17 @@ Updates the status of the order with the specified ID.
 
 `404 Not Found`: Order with the specified ID not found.
 
+## Dependencies
+This service is dependent on two other services:
+
+`Product Catalog Service` : This service is used to retrieve product details and update inventory levels when an order is placed. The order management service makes GET and PUT requests to this service.
+
+`Shopping Cart Service` : This service is used to retrieve the customer's shopping cart when placing an order. The order management service makes GET and PUT requests to this service.
 
 ## Access the microservice at
 https://order_management-1-w1405204.deta.app/
 
+Refer to the API documentation for detailed information on request/response payloads and usage.
 
 ## Access the API documentation at
 https://order_management-1-w1405204.deta.app/docs

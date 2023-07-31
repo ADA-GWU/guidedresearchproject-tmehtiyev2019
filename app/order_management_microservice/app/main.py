@@ -50,11 +50,6 @@ try:
 except psycopg2.Error as e:
     print("An error occurred while creating the tables:", e)
 
-finally:
-    if cur is not None:
-        cur.close()
-    if conn is not None:
-        conn.close()
 
 class OrderItem(BaseModel):
     product_id: int
@@ -77,13 +72,13 @@ def root():
 @app.post("/orders/{customer_id}")
 def create_order(customer_id: int):
     # Retrieve the customer's shopping cart from the Shopping Cart Microservice
-    response = requests.get(f"https://shopping_cart-1-y6546994.deta.app/carts/{customer_id}")
+    response = requests.get(f"https://product_catalog-1-f3543029.deta.app/carts/{customer_id}")
     if response.status_code == 200:
         cart = response.json()
 
         # Confirm that sufficient inventory is available for each item in the cart
         for item in cart['items']:
-            product = requests.get(f"https://firstdeployment-1-o4058039.deta.app/products/{item['product_id']}").json()
+            product = requests.get(f"https://product_catalog-1-f3543029.deta.app/products/{item['product_id']}").json()
             if product['quantity'] < item['quantity']:
                 return {"message": f"Not enough product in stock for product id {item['product_id']}"}, 400
 
@@ -93,16 +88,16 @@ def create_order(customer_id: int):
                     (customer_id,))
         order_id = cur.fetchone()['id']
         for item in cart['items']:
-            product = requests.get(f"https://firstdeployment-1-o4058039.deta.app/products/{item['product_id']}").json()
+            product = requests.get(f"https://product_catalog-1-f3543029.deta.app/products/{item['product_id']}").json()
             product['quantity'] -= item['quantity']
-            requests.put(f"https://firstdeployment-1-o4058039.deta.app/products/{item['product_id']}", json=product)
+            requests.put(f"https://product_catalog-1-f3543029.deta.app/products/{item['product_id']}", json=product)
 
             cur.execute("INSERT INTO order_items (product_id, quantity, order_id) VALUES (%s, %s, %s)",
                         (item['product_id'], item['quantity'], order_id))
         conn.commit()
 
         # Updating the order status in the Shopping Cart Microservice
-        response = requests.put(f"https://shopping_cart-1-y6546994.deta.app/carts/{customer_id}", json={"status": "Ordered"})
+        response = requests.put(f"https://product_catalog-1-f3543029.deta.app/carts/{customer_id}", json={"status": "Ordered"})
         if response.status_code != 200:
             return {"message": "Failed to update cart status"}, 500
 

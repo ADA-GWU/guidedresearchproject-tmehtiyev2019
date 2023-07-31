@@ -90,7 +90,9 @@ This service is dependent on two other services:
 `Shopping Cart Service` : This service is used to retrieve the customer's shopping cart when placing an order. The order management service makes GET and PUT requests to this service.
 
 ## Database Connection
-This service uses PostgreSQL as its database. It connects to the PostgreSQL instance using the psycopg2 library. The database connection parameters are specified within the application code, including the database name, user, password, host, and port.
+This service uses `PostgreSQL` as its database which is deployed on `Amazon RDS`. It connects to the PostgreSQL instance using the psycopg2 library. The database connection parameters are specified within the application code, including the database name, user, password, host, and port.
+
+Upon application start-up, the service automatically connects to the database using the provided credentials and host information. The code then checks for the existence of necessary tables (orders and order_items) and creates them if they do not exist.
 
 ### Database Tables
 There are two tables created within this service:

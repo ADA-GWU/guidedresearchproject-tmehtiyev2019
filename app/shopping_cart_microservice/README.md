@@ -14,6 +14,18 @@ Get all shopping carts.
 `404 Not` Found: No shopping carts found.
 
 
+```
+@app.get("/carts")
+def get_all_carts():
+    cur.execute("SELECT * FROM carts")
+    all_carts = cur.fetchall()
+    if not all_carts:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                            detail="No carts found")
+    return {"carts": all_carts}
+```
+
+
 #### GET /cart_items:
 Get all items in all shopping carts.
 
@@ -21,6 +33,18 @@ Get all items in all shopping carts.
 
 `200 OK`: Successful operation. Returns a list of all items in all shopping carts.
 `404 Not Found`: No items found in any shopping cart.
+
+
+```
+@app.get("/cart_items")
+def get_all_cart_items():
+    cur.execute("SELECT * FROM cart_items")
+    items = cur.fetchall()
+    if items is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                            detail="No items found in any cart")
+    return {"items": items}
+```
 
 
 #### GET /carts/{customer_id}:
@@ -35,6 +59,18 @@ Returns the active cart for the customer with the specified ID.
 
 `200 OK`: Successful operation. Returns the active cart of the customer with the specified ID.
 `404 Not Found`: No active cart found for the customer with the specified ID.
+
+
+```
+@app.get("/carts/{customer_id}")
+def get_cart(customer_id: int):
+    cur.execute("SELECT * FROM carts WHERE customer_id = %s AND status = 'Active'", (customer_id,))
+    cart = cur.fetchone()
+    if cart is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                            detail=f"Active cart for customer with id: {customer_id} was not found")
+    return {"cart": cart}
+```
 
 
 #### POST /carts/{customer_id}:
@@ -57,6 +93,35 @@ Adds an item to the active cart of the customer with the specified ID.
 `404 Not Found`: Product with the specified ID not found.
 
 
+```
+@app.post("/carts/{customer_id}", status_code=status.HTTP_201_CREATED)
+def add_item_to_cart(customer_id: int, cart_item: CartItem):
+    response = requests.get(f"https://product_catalog-1-f3543029.deta.app/products/{cart_item.product_id}")
+    if response.status_code == 200:
+        product = response.json()["product_detail"]
+        if product['quantity'] >= cart_item.quantity:
+            cur.execute("SELECT id FROM carts WHERE customer_id = %s AND status = 'Active'", (customer_id,))
+            cart = cur.fetchone()
+            if cart is None:
+                cur.execute("INSERT INTO carts (customer_id, status) VALUES (%s, 'Active') RETURNING id", 
+                            (customer_id,))
+                cart_id = cur.fetchone()["id"]
+            else:
+                cart_id = cart["id"]
+            cur.execute("INSERT INTO cart_items (cart_id, product_id, quantity) VALUES (%s, %s, %s)",
+                        (cart_id, cart_item.product_id, cart_item.quantity))
+            conn.commit()
+            return {"message": "Item added to cart successfully"}
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
+                                detail="Not enough product in stock")
+    else:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                            detail=f"Product with id {cart_item.product_id} not found")
+
+```
+
+
 #### DELETE /carts/{customer_id}/{product_id}:
 
 Deletes the specified product from the cart of the customer with the specified ID.
@@ -70,6 +135,19 @@ Deletes the specified product from the cart of the customer with the specified I
 
 `204 No Content`: Product deleted successfully from the cart.
 `404 Not Found`: Product with the specified ID not found in the cart of the customer with the specified ID.
+
+
+```
+@app.delete("/carts/{customer_id}/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_item_from_cart(customer_id: int, product_id: int):
+    cur.execute("DELETE FROM cart_items WHERE cart_id IN (SELECT id FROM carts WHERE customer_id = %s) AND product_id = %s",
+                (customer_id, product_id))
+    conn.commit()
+    if cur.rowcount == 0:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                            detail=f"product with id: {product_id} does not exist in the cart of customer with id: {customer_id}")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+```
 
 
 #### PUT /carts/{customer_id}/{product_id}:
@@ -90,6 +168,30 @@ Updates the quantity of a specific item in the active cart of the customer with 
 `400 Bad Request`: Not enough product in stock.
 `404 Not Found`: Product with the specified ID not found in the cart of the customer with the specified ID.
 
+
+```
+@app.put("/carts/{customer_id}/{product_id}")
+def update_item_in_cart(customer_id: int, product_id: int, updated_cart_item: CartItem):
+    response = requests.get(f"https://product_catalog-1-f3543029.deta.app/products/{product_id}")
+    if response.status_code == 200:
+        product = response.json()["product_detail"]
+        if product['quantity'] >= updated_cart_item.quantity:
+            cur.execute("UPDATE cart_items SET quantity = %s WHERE cart_id IN (SELECT id FROM carts WHERE customer_id = %s AND status = 'Active') AND product_id = %s",
+                        (updated_cart_item.quantity, customer_id, product_id))
+            conn.commit()
+            if cur.rowcount == 0:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                                    detail=f"Product with id: {product_id} does not exist in the cart of customer with id: {customer_id}")
+            return {"message": "Item quantity updated successfully"}
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
+                                detail="Not enough product in stock")
+    else:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                            detail=f"Product with id {product_id} not found")
+
+```
+
 #### PUT /carts/{customer_id}:
 Updates the status of the active cart of the customer with the specified ID.
 
@@ -106,13 +208,102 @@ Updates the status of the active cart of the customer with the specified ID.
 `202 Accepted`: Cart status updated successfully.
 `404 Not Found`: No active cart found for the customer with the specified ID.
 
+
+```
+@app.put("/carts/{customer_id}", status_code=status.HTTP_202_ACCEPTED)
+def update_cart_status(customer_id: int, status: str = 'Ordered'):
+    cur.execute("UPDATE carts SET status = %s WHERE customer_id = %s AND status = 'Active'", (status, customer_id))
+    conn.commit()
+    if cur.rowcount == 0:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                            detail=f"No active cart found for customer with id: {customer_id}")
+    return {"message": "Cart status updated successfully"}
+```
+
 ## Dependencies
 This service is dependent on the Product Catalog Microservice for product data.
 
-Database Connection
+* The Shopping Cart Microservice is dependent on the `Product Catalog Microservice` for information about the products. Here's what this dependency involves:
+
+When a customer wants to add a product to their shopping cart, the Shopping Cart Microservice needs to check the Product Catalog Microservice to ensure the product exists and to get its details. This means there is a call from the Shopping Cart Microservice to the Product Catalog Microservice.
+
+
+```
+@app.post("/carts/{customer_id}", status_code=status.HTTP_201_CREATED)
+def add_item_to_cart(customer_id: int, cart_item: CartItem):
+    response = requests.get(f"https://product_catalog-1-f3543029.deta.app/products/{cart_item.product_id}")
+    if response.status_code == 200:
+        product = response.json()["product_detail"]
+        if product['quantity'] >= cart_item.quantity:
+            cur.execute("SELECT id FROM carts WHERE customer_id = %s AND status = 'Active'", (customer_id,))
+            cart = cur.fetchone()
+            if cart is None:
+                cur.execute("INSERT INTO carts (customer_id, status) VALUES (%s, 'Active') RETURNING id", 
+                            (customer_id,))
+                cart_id = cur.fetchone()["id"]
+            else:
+                cart_id = cart["id"]
+            cur.execute("INSERT INTO cart_items (cart_id, product_id, quantity) VALUES (%s, %s, %s)",
+                        (cart_id, cart_item.product_id, cart_item.quantity))
+            conn.commit()
+            return {"message": "Item added to cart successfully"}
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
+                                detail="Not enough product in stock")
+    else:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                            detail=f"Product with id {cart_item.product_id} not found")
+
+```
+
+Similarly, when a customer updates the quantity of a product in their cart, the Shopping Cart Microservice has to ensure that enough quantity of the product is available. This information is retrieved from the Product Catalog Microservice.
+
+
+```
+@app.put("/carts/{customer_id}/{product_id}")
+def update_item_in_cart(customer_id: int, product_id: int, updated_cart_item: CartItem):
+    response = requests.get(f"https://product_catalog-1-f3543029.deta.app/products/{product_id}")
+    if response.status_code == 200:
+        product = response.json()["product_detail"]
+        if product['quantity'] >= updated_cart_item.quantity:
+            cur.execute("UPDATE cart_items SET quantity = %s WHERE cart_id IN (SELECT id FROM carts WHERE customer_id = %s AND status = 'Active') AND product_id = %s",
+                        (updated_cart_item.quantity, customer_id, product_id))
+            conn.commit()
+            if cur.rowcount == 0:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                                    detail=f"Product with id: {product_id} does not exist in the cart of customer with id: {customer_id}")
+            return {"message": "Item quantity updated successfully"}
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
+                                detail="Not enough product in stock")
+    else:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                            detail=f"Product with id {product_id} not found")
+
+```
+
+These dependencies are managed through API calls between the two services as described in the codes above.
+
+## Database Connection
 This service uses PostgreSQL as its database which is deployed on Amazon RDS. It connects to the PostgreSQL instance using the psycopg2 library. The database connection parameters are specified within the application code, including the database name, user, password, host, and port.
 
 Upon application start-up, the service automatically connects to the database using the provided credentials and host information. The code then checks for the existence of necessary tables (carts and cart_items) and creates them if they do not exist.
+
+
+```
+try:
+    conn = psycopg2.connect(
+        dbname='shopping_cart_db',
+        user='postgres',
+        password="qwer1234!",
+        host='database-1.cyxnkg8bocgc.us-east-2.rds.amazonaws.com',
+        port="5432",
+        cursor_factory=RealDictCursor
+    )
+except psycopg2.Error as e:
+    print("Unable to connect to the database")
+
+```
 
 ### Database Tables
 There are two tables created within this service:
@@ -129,6 +320,54 @@ There are two tables created within this service:
 `product_id`: The ID of the product.
 `quantity`: The quantity of the product in the cart.
 `cart_id`: The ID of the cart that the item is in.
+
+
+```
+try:
+    cur = conn.cursor()
+
+    # Create a 'carts' table
+    create_carts_table_query = '''
+    CREATE TABLE IF NOT EXISTS carts(
+        id SERIAL PRIMARY KEY,
+        customer_id INT NOT NULL,
+        status VARCHAR NOT NULL
+    )
+    '''
+
+    # Create a 'cart_items' table
+    create_cart_items_table_query = '''
+    CREATE TABLE IF NOT EXISTS cart_items(
+        id SERIAL PRIMARY KEY,
+        product_id INT NOT NULL,
+        quantity INT NOT NULL,
+        cart_id INT,
+        FOREIGN KEY (cart_id) REFERENCES carts (id)
+    )
+    '''
+
+    cur.execute(create_carts_table_query)
+    cur.execute(create_cart_items_table_query)
+
+    conn.commit()
+    print("Tables created successfully")
+
+except psycopg2.Error as e:
+    print("An error occurred while creating the tables:", e)
+
+
+
+class CartItem(BaseModel):
+    product_id: int
+    quantity: int
+
+
+class Cart(BaseModel):
+    id: int
+    customer_id: int
+    status: str
+    items: list[CartItem]
+```
 
 
 ## Service Deployment

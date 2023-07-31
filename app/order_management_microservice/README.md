@@ -13,6 +13,21 @@ Get all orders.
 `200 OK`: Successful operation. Returns a list of orders.
 
 
+#### GET /orders/{customer_id}:: 
+Fetch all orders for the specified customer.
+
+
+##### Parameters
+
+`customer_id`: ID of the customer for whom to retrieve the orders.
+
+##### Response
+
+`200 OK`: Successful operation. Returns a list of orders.
+
+`404 Not Found`: No orders found for the specified customer.
+
+
 #### GET /orders/{order_id}: 
 Returns the order with the specified ID.
 
@@ -27,15 +42,14 @@ Returns the order with the specified ID.
 
 `404 Not Found`: Order with the specified ID not found.
 
-#### POST /orders:
-Creates a new order.
+#### POST /orders/{customer_id}:
+Creates a new order for the specified customer.
 
+##### Parameters
+
+`customer_id`: ID of the customer for whom the order is to be created.
 
 ##### Request Body
-
-`id (integer)`: ID of the order.
-
-`customer_name (string)`: Name of the customer.
 
 `items (array of objects)`: Array of order items.
 
@@ -46,6 +60,8 @@ Creates a new order.
 ##### Response
 
 `201 Created`: Order created successfully.
+
+`400 Bad Request`:  Insufficient inventory for one or more items.
 
 `500 Internal Server Error`: Failed to create the order.
 
@@ -68,12 +84,12 @@ Updates the status of the order with the specified ID.
 
 
 ## Access the microservice at
-http://localhost:8003
+https://order_management-1-w1405204.deta.app/
 
-## How to Run
 
-1. Install Docker on your machine.
+## Access the API documentation at
+https://order_management-1-w1405204.deta.app/docs
 
-2. Build the Docker image:
-   ```bash
-   docker build -t order-management-microservice .
+
+
+

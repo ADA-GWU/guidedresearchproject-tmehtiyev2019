@@ -382,15 +382,16 @@ Note that Deta Space takes care of HTTPS, running on startup, restarts, replicat
 
 
 
-
-
 ## Access the microservice at
 https://order_management-1-w1405204.deta.app/
 
 Refer to the API documentation for detailed information on request/response payloads and usage.
 
-## Access the API documentation at
+## Access the API documentation at Swager UI
 https://order_management-1-w1405204.deta.app/docs
+
+## Access the Postman API Test Collection:
+app/Postman API Test Collection
 
 
 

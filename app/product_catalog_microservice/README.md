@@ -16,23 +16,20 @@ Add a new product.
 PUT /products/{product_id}
 Update product by ID.
 
-Refer to the API documentation for detailed information on request/response payloads and usage.
+## Dependencies
+This service is dependent on two other services:
+
+`Product Catalog Service` : This service is used to retrieve product details and update inventory levels when an order is placed. The order management service makes GET and PUT requests to this service.
+
+`Shopping Cart Service` : This service is used to retrieve the customer's shopping cart when placing an order. The order management service makes GET and PUT requests to this service.
 
 
 ## Access the microservice at
-http://localhost:8001
+https://product_catalog-1-f3543029.deta.app/
 
-## How to Run
+Refer to the API documentation for detailed information on request/response payloads and usage.
 
-1. Install Docker on your machine.
-
-2. Build the Docker image:
-   ```bash
-   docker build -t product-catalog-microservice 
-
-3. Run the Docker container:
-  ```bash
-   docker run -d -p 8001:8001 product-catalog-microservice 
-
+## Access the API documentation at
+https://product_catalog-1-f3543029.deta.app/docs
 
 

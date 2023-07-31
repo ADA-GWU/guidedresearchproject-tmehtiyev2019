@@ -11,6 +11,16 @@ Get all products.
 #### Response
 `200 OK`: Successful operation. Returns a list of products.
 
+
+```
+@app.get("/products")
+def get_products():
+    cur.execute("""SELECT * FROM products""")
+    products=cur.fetchall()
+    # print(products)
+    return {"data":products}
+```
+
 #### GET /products/{product_id}:
 
 Returns the product with the specified ID.
@@ -22,6 +32,17 @@ Returns the product with the specified ID.
 `200 OK`: Successful operation. Returns the product with the specified ID.
 
 `404 Not Found`: Product with the specified ID not found.
+
+
+```
+@app.get("/products/{product_id}")
+def get_product(product_id: int):
+    cur.execute("SELECT * FROM products WHERE id = %s", (product_id,))
+    product = cur.fetchone()
+    if product is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"product with id: {product_id} was not found")
+    return {"product_detail":product}
+```
 
 #### POST /products:
 Creates a new product in the catalog.
@@ -38,6 +59,19 @@ Creates a new product in the catalog.
 `201 Created`: Product created successfully.
 
 `500 Internal Server Error`: Failed to create the product.
+
+
+```
+@app.post("/products", status_code=status.HTTP_201_CREATED )
+def add_product(product: Product):
+    cur.execute(
+        """INSERT INTO products ( name, price, quantity) VALUES (%s, %s, %s) RETURNING * """,
+        ( product.name, product.price, product.quantity)
+    )
+    new_product=cur.fetchone()
+    conn.commit()
+    return {"data": new_product}
+```
 
 #### PUT /products/{product_id}:
 Updates the specified product in the catalog.
@@ -57,6 +91,30 @@ Updates the specified product in the catalog.
 
 `404 Not Found`: Product with the specified ID not found.
 
+
+```
+@app.put("/products/{product_id}")
+def update_product(product_id: int, updated_product: Product):
+    # check if product exists
+    cur.execute("SELECT * FROM products WHERE id = %s", (product_id,))
+    product = cur.fetchone()
+    if product is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"product with id: {product_id} was not found")
+    
+    # update the product
+    cur.execute(
+        """UPDATE products 
+           SET name = %s, price = %s, quantity = %s 
+           WHERE id = %s RETURNING *""",
+        (updated_product.name, updated_product.price, updated_product.quantity, product_id)
+    )
+    conn.commit()
+    updated_product = cur.fetchone()
+
+    return {"message": "Product updated successfully", "updated_product": updated_product}
+
+```
+
 #### DELETE /products/{product_id}:
 Deletes the specified product from the catalog.
 
@@ -68,6 +126,17 @@ product_id: ID of the product to delete.
 
 `404 Not Found`: Product with the specified ID not found.
 
+
+```
+@app.delete("/products/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_product(product_id: int):
+    cur.execute("DELETE FROM products WHERE id = %s", (product_id,))
+    conn.commit()
+    if cur.rowcount == 0:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"product with id: {product_id} does not exist")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+```
+
 ## Dependencies
 
 This service is independent and does not have any dependencies.
@@ -77,6 +146,22 @@ This service is independent and does not have any dependencies.
 This service uses PostgreSQL as its database which is deployed on Amazon RDS. It connects to the PostgreSQL instance using the psycopg2 library. The database connection parameters are specified within the application code, including the database name, user, password, host, and port.
 
 Upon application start-up, the service automatically connects to the database using the provided credentials and host information. The code then checks for the existence of necessary tables (products) and creates them if they do not exist.
+
+
+```
+try:
+    conn = psycopg2.connect(
+        dbname='product_catalog_db',
+        user='postgres',
+        password="qwer1234!",
+        host='database-1.cyxnkg8bocgc.us-east-2.rds.amazonaws.com',
+        port="5432",
+        cursor_factory=RealDictCursor
+    )
+except psycopg2.Error as e:
+    print("Unable to connect to the database")
+```
+
 
 ### Database Tables
 There is one table created within this service:
@@ -89,6 +174,29 @@ There is one table created within this service:
 `price`: The price of the product.
 
 `quantity`: The quantity of the product in the inventory.
+
+
+```
+try:
+    cur = conn.cursor()
+
+    create_table_query = '''
+    CREATE TABLE IF NOT EXISTS products(
+        id SERIAL PRIMARY KEY,
+        name VARCHAR NOT NULL,
+        price INTEGER NOT NULL,
+        quantity INTEGER NOT NULL
+    )
+    '''
+
+    cur.execute(create_table_query)
+    conn.commit()
+    print("Table created successfully")
+
+except psycopg2.Error as e:
+    print("An error occurred while creating the table:", e)
+
+```
 
 ## Service Deployment
 

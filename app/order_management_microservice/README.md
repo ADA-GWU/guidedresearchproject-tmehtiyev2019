@@ -89,6 +89,27 @@ This service is dependent on two other services:
 
 `Shopping Cart Service` : This service is used to retrieve the customer's shopping cart when placing an order. The order management service makes GET and PUT requests to this service.
 
+## Database Connection
+This service uses PostgreSQL as its database. It connects to the PostgreSQL instance using the psycopg2 library. The database connection parameters are specified within the application code, including the database name, user, password, host, and port.
+
+### Database Tables
+There are two tables created within this service:
+
+#### orders: This table keeps track of all customer orders. It has three fields:
+
+`id` : A unique identifier for the order.
+`customer_id`: The identifier for the customer who placed the order.
+`status`: The status of the order (e.g., 'Ordered').
+
+
+#### order_items: This table stores details of all items in each order. It has four fields:
+
+`id`: A unique identifier for the order item.
+`product_id`: The identifier for the product ordered.
+`quantity`: The number of units of the product ordered.
+`order_id`: The identifier of the order in which the item was ordered. This is a foreign key referencing the id field in the orders table.
+
+
 ## Access the microservice at
 https://order_management-1-w1405204.deta.app/
 

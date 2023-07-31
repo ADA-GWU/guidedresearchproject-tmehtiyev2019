@@ -472,7 +472,7 @@ This is a PostgreSQL database adapter for Python. The Shopping Cart Microservice
 #### Requests: 
 This is a Python library used for making HTTP requests. It abstracts the complexities of making requests behind a simple API, allowing you to send HTTP/1.1 requests. The Shopping Cart Microservice uses this library to communicate with the Product Catalog Microservice.
 
-These dependencies are listed in a requirements.txt file and installed in the environment where the service runs using pip, the Python package installer.
+These dependencies are listed in a `requirements.txt` file and installed in the environment where the service runs using pip, the Python package installer.
 
 ## Access the microservice at
 https://shopping_cart-1-y6546994.deta.app/

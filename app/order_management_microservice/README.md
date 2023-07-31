@@ -26,7 +26,7 @@ def get_all_orders():
 
 
 
-#### GET /orders/{customer_id}:: 
+#### GET /orders/{customer_id}:
 Fetch all orders for the specified customer.
 
 

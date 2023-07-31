@@ -387,7 +387,7 @@ https://order_management-1-w1405204.deta.app/
 
 Refer to the API documentation for detailed information on request/response payloads and usage.
 
-## Access the API documentation at Swager UI
+## Access the API documentation at Swagger UI
 https://order_management-1-w1405204.deta.app/docs
 
 ## Access the Postman API Test Collection:

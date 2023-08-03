@@ -1,9 +1,11 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel
+from fastapi.responses import Response
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import requests
 import time
+from typing import List
 
 # Connect to the database
 try:
@@ -69,41 +71,82 @@ app = FastAPI()
 def root():
     return {"message":"Welcome to order management service."}
 
-@app.post("/orders/{customer_id}")
+
+@app.post("/orders/{customer_id}", status_code=status.HTTP_201_CREATED)
 def create_order(customer_id: int):
     # Retrieve the customer's shopping cart from the Shopping Cart Microservice
-    response = requests.get(f"https://product_catalog-1-f3543029.deta.app/carts/{customer_id}")
-    if response.status_code == 200:
-        cart = response.json()
+    try:
+        response_cart = requests.get(f"https://shopping_cart-1-y6546994.deta.app/carts/{customer_id}",verify=False)
+    except requests.exceptions.RequestException as e:
+        # This will catch any type of RequestException, including ConnectionError, Timeout, TooManyRedirects, etc.
+        # You can handle the exception here, e.g., by logging it, retrying the request, returning a response indicating an error, etc.
+        print(f"An error occurred while trying to get the cart: {e}")
 
-        # Confirm that sufficient inventory is available for each item in the cart
-        for item in cart['items']:
-            product = requests.get(f"https://product_catalog-1-f3543029.deta.app/products/{item['product_id']}").json()
-            if product['quantity'] < item['quantity']:
-                return {"message": f"Not enough product in stock for product id {item['product_id']}"}, 400
+    
+    
+    if response_cart.status_code == 200:
+        cart = response_cart.json()
+        cart_id = cart['cart']['id']
+        
 
-        # If we reach here, it means we have enough inventory for all items in the cart.
-        # Now, decrease the product quantity in the Product Catalog Service and create the order
-        cur.execute("INSERT INTO orders (customer_id, status) VALUES (%s, 'Ordered') RETURNING id",
-                    (customer_id,))
-        order_id = cur.fetchone()['id']
-        for item in cart['items']:
-            product = requests.get(f"https://product_catalog-1-f3543029.deta.app/products/{item['product_id']}").json()
-            product['quantity'] -= item['quantity']
-            requests.put(f"https://product_catalog-1-f3543029.deta.app/products/{item['product_id']}", json=product)
 
-            cur.execute("INSERT INTO order_items (product_id, quantity, order_id) VALUES (%s, %s, %s)",
-                        (item['product_id'], item['quantity'], order_id))
-        conn.commit()
+        # Now we get the cart items
+        response_items = requests.get(f"https://shopping_cart-1-y6546994.deta.app/cart_items",verify=False)
+        
+        if response_items.status_code == 200:
+            items = response_items.json()
 
-        # Updating the order status in the Shopping Cart Microservice
-        response = requests.put(f"https://product_catalog-1-f3543029.deta.app/carts/{customer_id}", json={"status": "Ordered"})
-        if response.status_code != 200:
-            return {"message": "Failed to update cart status"}, 500
+            if len([item for item in items['items'] if item['cart_id'] == cart_id])==0:
+                return{"message": "There is no selected card item for the customer"},500
+            
+        
+            # Confirm that sufficient inventory is available for each item in the cart
+            for item in [item for item in items['items'] if item['cart_id'] == cart_id]:
+             
+                # Get inventory data for item
+                
+                response_inventory = requests.get(f"https://product_catalog-1-f3543029.deta.app/products/{item['product_id']}",verify=False)
+            
+                if response_inventory.status_code != 200:
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Item: {item['product_id']} not found in the stock")
+                inventory_item = response_inventory.json()
+                
+                # Check inventory availability
+                if inventory_item['product_detail']['quantity'] < item['quantity']:
+                    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Not enough quantity for item: {item['product_id']} in the stock")
+                
 
-        return {"message": "Order created successfully"}, 201
+                    # If we reach here, it means we have enough inventory for all items in the cart.
+            # Now, decrease the product quantity in the Product Catalog Service and create the order
+            cur.execute("INSERT INTO orders (customer_id, status) VALUES (%s, 'Ordered') RETURNING id",
+                        (customer_id,))
+            
+            order_id = cur.fetchone()['id']
+            
+            for item in [item for item in items['items'] if item['cart_id'] == cart_id]:
+                product = requests.get(f"https://product_catalog-1-f3543029.deta.app/products/{item['product_id']}",verify=False).json()
+                product['product_detail']['quantity'] -= item['quantity']
+                
+                requests.put(f"https://product_catalog-1-f3543029.deta.app/products/{item['product_id']}",verify=False, json=product['product_detail'])
+                
 
-    return {"message": "Failed to retrieve the customer's shopping cart"}, 500
+                cur.execute("INSERT INTO order_items (product_id, quantity, order_id) VALUES (%s, %s, %s)",
+                            (item['product_id'], item['quantity'], order_id))
+                
+            conn.commit()
+
+        
+
+                    # Updating the order status in the Shopping Cart Microservice
+            response = requests.put(f"https://shopping_cart-1-y6546994.deta.app/carts/{customer_id}",verify=False, json={"status": "Ordered"})
+            
+            if response.status_code != 200:
+                return {"message": "Failed to update cart status"}, 500
+
+            return {"message": "Order created successfully"}, 201
+
+        return {"message": "Failed to retrieve the customer's shopping cart"}, 500
+
 
 
 @app.get("/orders")
@@ -124,3 +167,13 @@ def get_orders(customer_id: int):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                             detail=f"Orders for customer with id: {customer_id} were not found")
     return {"orders": orders}
+
+
+@app.get("/order_items")
+def get_all_order_items():
+    cur.execute("SELECT * FROM order_items")
+    items = cur.fetchall()
+    if items is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                            detail="No items found in any cart")
+    return {"items": items}

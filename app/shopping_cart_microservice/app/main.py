@@ -157,11 +157,12 @@ def update_item_in_cart(customer_id: int, product_id: int, updated_cart_item: Ca
                             detail=f"Product with id {product_id} not found")
 
 
-@app.put("/carts/{customer_id}", status_code=status.HTTP_202_ACCEPTED)
+@app.put("/carts/{customer_id}", status_code=status.HTTP_200_OK)
 def update_cart_status(customer_id: int, status: str = 'Ordered'):
     cur.execute("UPDATE carts SET status = %s WHERE customer_id = %s AND status = 'Active'", (status, customer_id))
     conn.commit()
     if cur.rowcount == 0:
+        return {"message": "Cart status updated successfully"}
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                             detail=f"No active cart found for customer with id: {customer_id}")
     return {"message": "Cart status updated successfully"}

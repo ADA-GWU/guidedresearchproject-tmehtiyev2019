@@ -50,11 +50,6 @@ try:
 except psycopg2.Error as e:
     print("An error occurred while creating the tables:", e)
 
-finally:
-    if cur is not None:
-        cur.close()
-    if conn is not None:
-        conn.close()
 
 
 class CartItem(BaseModel):
@@ -131,13 +126,14 @@ def add_item_to_cart(customer_id: int, cart_item: CartItem):
 
 @app.delete("/carts/{customer_id}/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_item_from_cart(customer_id: int, product_id: int):
-    cur.execute("DELETE FROM cart_items WHERE cart_id IN (SELECT id FROM carts WHERE customer_id = %s) AND product_id = %s",
+    cur.execute("DELETE FROM cart_items WHERE cart_id IN (SELECT id FROM carts WHERE customer_id = %s and status = 'Active') AND product_id = %s",
                 (customer_id, product_id))
     conn.commit()
     if cur.rowcount == 0:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                             detail=f"product with id: {product_id} does not exist in the cart of customer with id: {customer_id}")
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    return {"message": f"The product id {product_id} with customer id {customer_id} was deleted from the cart items"}
+
 
 
 @app.put("/carts/{customer_id}/{product_id}")

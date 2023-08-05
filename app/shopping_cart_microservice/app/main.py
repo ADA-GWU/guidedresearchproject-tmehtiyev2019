@@ -75,8 +75,9 @@ def get_all_carts():
     cur.execute("SELECT * FROM carts")
     all_carts = cur.fetchall()
     if not all_carts:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
-                            detail="No carts found")
+        return "No carts found"
+        # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+        #                     detail="No carts found")
     return {"carts": all_carts}
 
 @app.get("/cart_items")
@@ -84,8 +85,9 @@ def get_all_cart_items():
     cur.execute("SELECT * FROM cart_items")
     items = cur.fetchall()
     if items is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
-                            detail="No items found in any cart")
+        return "No items found in any cart"
+        # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+        #                     detail="No items found in any cart")
     return {"items": items}
 
 @app.get("/carts/{customer_id}")
@@ -93,8 +95,9 @@ def get_cart(customer_id: int):
     cur.execute("SELECT * FROM carts WHERE customer_id = %s AND status = 'Active'", (customer_id,))
     cart = cur.fetchone()
     if cart is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
-                            detail=f"Active cart for customer with id: {customer_id} was not found")
+        return f"Active cart for customer with id: {customer_id} was not found"
+        # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+        #                     detail=f"Active cart for customer with id: {customer_id} was not found")
     return {"cart": cart}
 
 
@@ -128,39 +131,46 @@ def add_item_to_cart(customer_id: int, cart_item: CartItem):
 
 @app.delete("/carts/{customer_id}/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_item_from_cart(customer_id: int, product_id: int):
-    cur.execute("DELETE FROM cart_items WHERE cart_id IN (SELECT id FROM carts WHERE customer_id = %s and status = 'Active') AND product_id = %s",
+    try:
+        cur.execute("DELETE FROM cart_items WHERE cart_id IN (SELECT id FROM carts WHERE customer_id = %s and status = 'Active') AND product_id = %s",
                 (customer_id, product_id))
+    except:
+        return "issue related to the sql query"
     conn.commit()
     if cur.rowcount == 0:
         return f"product with id: {product_id} does not exist in the cart of customer with id: {customer_id}"
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
-                            detail=f"product with id: {product_id} does not exist in the cart of customer with id: {customer_id}")
-    return {"message": f"The product id {product_id} with customer id {customer_id} was deleted from the cart items"}
+        # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+        #                     detail=f"product with id: {product_id} does not exist in the cart of customer with id: {customer_id}")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    # return {"message": f"The product id {product_id} with customer id {customer_id} was deleted from the cart items"}
 
 
 
 @app.put("/carts/{customer_id}/{product_id}")
 def update_item_in_cart(customer_id: int, product_id: int, updated_cart_item: CartItem):
-    response = requests.get(f"https://product_catalog-1-f3543029.deta.app/products/{product_id}",verify=False)
+    response = requests.get(f"http://product_catalog-1-f3543029.deta.app/products/{product_id}",verify=False)
     if response.status_code == 200:
         product = response.json()["product_detail"]
         if product['quantity'] >= updated_cart_item.quantity:
-            cur.execute("UPDATE cart_items SET quantity = %s WHERE cart_id IN (SELECT id FROM carts WHERE customer_id = %s AND status = 'Active') AND product_id = %s",
+            try:
+                cur.execute("UPDATE cart_items SET quantity = %s WHERE cart_id IN (SELECT id FROM carts WHERE customer_id = %s AND status = 'Active') AND product_id = %s",
                         (updated_cart_item.quantity, customer_id, product_id))
+            except:
+                return {"message": "Issue in writing to cart item table"}
             conn.commit()
             if cur.rowcount == 0:
                 return f"Product with id: {product_id} does not exist in the cart of customer with id: {customer_id}"
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
-                                    detail=f"Product with id: {product_id} does not exist in the cart of customer with id: {customer_id}")
+                # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                #                     detail=f"Product with id: {product_id} does not exist in the cart of customer with id: {customer_id}")
             return {"message": "Item quantity updated successfully"}
         else:
             return "Not enough product in stock"
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
-                                detail="Not enough product in stock")
+            # raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
+            #                     detail="Not enough product in stock")
     else:
         return f"Product with id {product_id} not found"
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
-                            detail=f"Product with id {product_id} not found")
+        # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+        #                     detail=f"Product with id {product_id} not found")
 
 
 @app.put("/carts/{customer_id}", status_code=status.HTTP_200_OK)
@@ -169,6 +179,6 @@ def update_cart_status(customer_id: int, status: str = 'Ordered'):
     conn.commit()
     if cur.rowcount == 0:
         return {"message": "Cart status updated successfully"}
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
-                            detail=f"No active cart found for customer with id: {customer_id}")
+        # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+        #                     detail=f"No active cart found for customer with id: {customer_id}")
     return {"message": "Cart status updated successfully"}

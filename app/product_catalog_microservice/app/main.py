@@ -66,7 +66,8 @@ def get_product(product_id: int):
     cur.execute("SELECT * FROM products WHERE id = %s", (product_id,))
     product = cur.fetchone()
     if product is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"product with id: {product_id} was not found")
+        return f"product with id: {product_id} was not found"
+        # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"product with id: {product_id} was not found")
     return {"product_detail":product}
 
 
@@ -85,7 +86,8 @@ def delete_product(product_id: int):
     cur.execute("DELETE FROM products WHERE id = %s", (product_id,))
     conn.commit()
     if cur.rowcount == 0:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"product with id: {product_id} does not exist")
+        return f"product with id: {product_id} does not exist"
+        # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"product with id: {product_id} does not exist")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -95,7 +97,8 @@ def update_product(product_id: int, updated_product: Product):
     cur.execute("SELECT * FROM products WHERE id = %s", (product_id,))
     product = cur.fetchone()
     if product is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"product with id: {product_id} was not found")
+        return f"product with id: {product_id} was not found"
+        # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"product with id: {product_id} was not found")
     
     # update the product
     cur.execute(

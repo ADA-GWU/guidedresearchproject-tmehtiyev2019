@@ -108,12 +108,14 @@ def create_order(customer_id: int):
                 response_inventory = requests.get(f"https://product_catalog-1-f3543029.deta.app/products/{item['product_id']}",verify=False)
             
                 if response_inventory.status_code != 200:
-                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Item: {item['product_id']} not found in the stock")
+                    return f"Item: {item['product_id']} not found in the stock"
+                    # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Item: {item['product_id']} not found in the stock")
                 inventory_item = response_inventory.json()
                 
                 # Check inventory availability
                 if inventory_item['product_detail']['quantity'] < item['quantity']:
-                    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Not enough quantity for item: {item['product_id']} in the stock")
+                    return f"Not enough quantity for item: {item['product_id']} in the stock"
+                    # raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Not enough quantity for item: {item['product_id']} in the stock")
                 
 
                     # If we reach here, it means we have enough inventory for all items in the cart.
@@ -164,8 +166,9 @@ def get_orders(customer_id: int):
     cur.execute("SELECT * FROM orders WHERE customer_id = %s", (customer_id,))
     orders = cur.fetchall()
     if not orders:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
-                            detail=f"Orders for customer with id: {customer_id} were not found")
+        return f"Orders for customer with id: {customer_id} were not found"
+        # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+        #                     detail=f"Orders for customer with id: {customer_id} were not found")
     return {"orders": orders}
 
 
@@ -174,6 +177,7 @@ def get_all_order_items():
     cur.execute("SELECT * FROM order_items")
     items = cur.fetchall()
     if items is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
-                            detail="No items found in any cart")
+        return "No items found in any cart"
+        # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+        #                     detail="No items found in any cart")
     return {"items": items}

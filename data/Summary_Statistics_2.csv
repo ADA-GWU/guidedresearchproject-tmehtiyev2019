@@ -1,0 +1,13 @@
+Label,# Samples,Average,Median,90% Line,95% Line,99% Line,Min,Max,Error %,Throughput,Received KB/sec,Sent KB/sec
+Product Catalog/Get products/products,449,694,708,1148,1232,1405,16,1452,5.122%,5.64113,4.30,2.47
+Product Catalog/Create products,445,635,655,1095,1184,1268,8,1673,7.865%,5.65956,4.24,3.30
+Product Catalog/Update products,441,615,647,1105,1193,1367,8,1448,10.431%,5.60969,2.85,3.50
+Product Catalog/Delete products,440,583,636,1072,1150,1263,8,1349,12.045%,5.59804,2.82,2.85
+Shopping Cart/Get carts,439,918,829,1379,1775,2400,13,2806,3.417%,5.57666,7.59,2.41
+Shopping Cart/Get cart items,429,802,732,1255,1507,2171,8,2663,6.993%,5.48678,8.54,2.38
+Shopping Cart/Add product to shopping cart,423,753,742,1198,1354,1933,8,2785,8.983%,5.41502,2.85,2.99
+Shopping Cart/Update order status in cart,419,710,717,1149,1256,1630,8,2538,10.979%,5.36540,2.79,2.84
+Order Management/Create orders,416,881,817,1258,1498,2169,13,2415,1.683%,5.33593,2.94,3.11
+Order Management/Get orders,415,793,738,1191,1303,1910,8,2298,2.651%,5.36079,4.12,2.37
+Order Management/Get order Items,411,786,743,1195,1322,1802,7,2494,4.623%,5.30439,3.93,2.37
+TOTAL,4727,741,721,1188,1311,1971,7,2806,6.833%,59.18738,46.09,30.00

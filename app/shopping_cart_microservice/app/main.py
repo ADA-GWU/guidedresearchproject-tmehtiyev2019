@@ -100,7 +100,7 @@ def get_cart(customer_id: int):
 
 @app.post("/carts/{customer_id}", status_code=status.HTTP_201_CREATED)
 def add_item_to_cart(customer_id: int, cart_item: CartItem):
-    response = requests.get(f"https://product_catalog-1-f3543029.deta.app/products/{cart_item.product_id}")
+    response = requests.get(f"http://product_catalog-1-f3543029.deta.app/products/{cart_item.product_id}",verify=False)
     if response.status_code == 200:
         product = response.json()["product_detail"]
         if product['quantity'] >= cart_item.quantity:
@@ -117,11 +117,13 @@ def add_item_to_cart(customer_id: int, cart_item: CartItem):
             conn.commit()
             return {"message": "Item added to cart successfully"}
         else:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
-                                detail="Not enough product in stock")
+            return f"Not enough product in stock"
+            # raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
+            #                     detail="Not enough product in stock")
     else:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
-                            detail=f"Product with id {cart_item.product_id} not found")
+        return f"Product with id {cart_item.product_id} not found"
+        # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+        #                     detail=f"Product with id {cart_item.product_id} not found")
 
 
 @app.delete("/carts/{customer_id}/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -130,6 +132,7 @@ def delete_item_from_cart(customer_id: int, product_id: int):
                 (customer_id, product_id))
     conn.commit()
     if cur.rowcount == 0:
+        return f"product with id: {product_id} does not exist in the cart of customer with id: {customer_id}"
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                             detail=f"product with id: {product_id} does not exist in the cart of customer with id: {customer_id}")
     return {"message": f"The product id {product_id} with customer id {customer_id} was deleted from the cart items"}
@@ -138,7 +141,7 @@ def delete_item_from_cart(customer_id: int, product_id: int):
 
 @app.put("/carts/{customer_id}/{product_id}")
 def update_item_in_cart(customer_id: int, product_id: int, updated_cart_item: CartItem):
-    response = requests.get(f"https://product_catalog-1-f3543029.deta.app/products/{product_id}")
+    response = requests.get(f"https://product_catalog-1-f3543029.deta.app/products/{product_id}",verify=False)
     if response.status_code == 200:
         product = response.json()["product_detail"]
         if product['quantity'] >= updated_cart_item.quantity:
@@ -146,13 +149,16 @@ def update_item_in_cart(customer_id: int, product_id: int, updated_cart_item: Ca
                         (updated_cart_item.quantity, customer_id, product_id))
             conn.commit()
             if cur.rowcount == 0:
+                return f"Product with id: {product_id} does not exist in the cart of customer with id: {customer_id}"
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                                     detail=f"Product with id: {product_id} does not exist in the cart of customer with id: {customer_id}")
             return {"message": "Item quantity updated successfully"}
         else:
+            return "Not enough product in stock"
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
                                 detail="Not enough product in stock")
     else:
+        return f"Product with id {product_id} not found"
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                             detail=f"Product with id {product_id} not found")
 

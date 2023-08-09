@@ -31,9 +31,7 @@ This project focuses on conducting a detailed analysis of a microservice archite
 3. **Metrics for Scalability Analysis**:
 
     - Response Time
-    - Throughput
-    - Resource Usage
-    - Error Rates
+
 
 
 4. **Approach**: Develop a comprehensive methodology combining empirical testing with theoretical analysis.
